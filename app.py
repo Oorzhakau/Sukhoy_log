@@ -126,6 +126,7 @@ def load_data_project(nrows):
     return data
 
 
+
 st.markdown("<h1 style='text-align: center;'>Интерактивная сводка</h1>", unsafe_allow_html=True)
 st.markdown("<h2 style='text-align: center;'>Сухой Лог</h2>", unsafe_allow_html=True)
 
@@ -153,6 +154,7 @@ df = data[(data['date_finish'].dt.date >= start_date) & (data['date_finish'].dt.
 
 st.markdown("Пробурено с **" + str(start_date) + "** по **" + str(end_date) +"** : **" + "{:.1f}".format(
     df['depth_f'].sum()) + " п.м.**")
+st.markdown("Проектный метраж: {:.1f}".format(data_pr['depth_pr'].sum()) + " п.м.")
 
 bhp = st.sidebar.checkbox("Проектные скважины", False)
 
@@ -228,7 +230,7 @@ st.pydeck_chart(pdk.Deck(
          latitude=np.average(data['latitude']).item(),
          longitude=np.average(data['longitude']).item(),
          zoom=12,
-         #pitch=50,
+         pitch=50,
      ),
      layers=map_layers,
     tooltip=tooltip,
