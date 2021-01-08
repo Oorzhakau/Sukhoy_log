@@ -243,7 +243,7 @@ res.reset_index(inplace=True)
 #Проходка за сутки-------------------------------------------------------------------------------------------
 
 st.markdown("<br><br><p style='text-align: center;'>Проходка за сутки в период с <b>" + str(start_date) + "</b> по <b>" + str(end_date) + "</b> </p>", unsafe_allow_html=True)
-sl_width = st.slider("Ширина графиков", 220, 600, step=20)
+sl_width = st.slider("Ширина графиков", 220, 1000, step=20)
 
 fig = px.line(res, x='date_finish', y='depth_f')
 fig.update_layout(xaxis_title="Дата",
