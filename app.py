@@ -5,7 +5,6 @@ import pydeck as pdk
 import plotly.graph_objs as go
 import plotly.express as px
 import re
-import datetime
 
 #DATA
 DATA_URL = (
@@ -14,6 +13,23 @@ DATA_URL = (
 DATA_URL_PROJECT = (
 "Приложение 3 Каталог горных выработок.xls"
 )
+
+st.markdown(
+        f"""
+<style>
+    .reportview-container .main .block-container{{
+        padding-right: 3rem;
+        padding-left: 4rem;
+    }}
+    .svg-container{{
+
+    }} 
+
+</style>
+""",
+        unsafe_allow_html=True,
+    )
+
 
 mydateparser = lambda x: pd.datetime.strptime(x, "%d.%m.%y")
 сomma2dot = lambda x: x.replace(',', '.')
@@ -224,11 +240,17 @@ st.dataframe(df)
 res = df.groupby(['date_finish']).sum()
 res.reset_index(inplace=True)
 
+#Проходка за сутки-------------------------------------------------------------------------------------------
+
 st.markdown("<br><br><p style='text-align: center;'>Проходка за сутки в период с <b>" + str(start_date) + "</b> по <b>" + str(end_date) + "</b> </p>", unsafe_allow_html=True)
+sl_width = st.slider("Ширина графиков", 220, 600, step=20)
 
 fig = px.line(res, x='date_finish', y='depth_f')
 fig.update_layout(xaxis_title="Дата",
-                  yaxis_title="Метраж, п.м.")
+                  yaxis_title="Метраж, п.м.",
+                  width=sl_width,
+                  height=sl_width-int(0.2*sl_width),
+                  margin=dict(l=20, r=20, t=0, b=0))
 st.write(fig)
 
 acc_date = {}
@@ -256,6 +278,7 @@ acc_date_pr = pd.DataFrame(acc_date_pr)
 acc_date_pr.reset_index(inplace=True)
 acc_date_pr.rename(columns={'index': 'date', 0: 'depth'}, inplace=True)
 
+
 st.markdown("<br><br><p style='text-align: center;'>Куммулятивная кривая метража с <b>" + str(start_date) + "</b> по <b>" + str(end_date) + "</b> </p>", unsafe_allow_html=True)
 fig = go.Figure()
 fig.add_trace(go.Scatter(x=acc_date['date'], y=acc_date['depth'],  name='Фактический'))
@@ -268,7 +291,9 @@ fig.update_layout(legend_orientation="h",
                     x=0.98),
                   xaxis_title="Дата",
                   yaxis_title="Метраж, п.м.",
-                  margin=dict(l=0, r=0, t=30, b=0),
+                  margin=dict(l=20, r=20, t=0, b=0),
+                  width=sl_width,
+                  height=sl_width-int(0.2*sl_width),
                   xaxis_range=[acc_date['date'].iloc[0], acc_date['date'].iloc[acc_date.shape[0]-1]])
 st.write(fig)
 
@@ -293,6 +318,8 @@ fig.update_layout(legend_orientation="h",
                     x=0.98),
                   xaxis_title="Дата",
                   yaxis_title="Метраж, п.м.",
-                  margin=dict(l=0, r=0, t=30, b=0),
+                  width=sl_width,
+                  height=sl_width-int(0.2*sl_width),
+                  margin=dict(l=20, r=20, t=0, b=0),
                   )
 st.write(fig)
