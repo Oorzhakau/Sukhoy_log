@@ -147,19 +147,20 @@ st.markdown("**Дата начала бурения:** " + str(data['date_start'
 td = today.date() - data['date_start'].dt.date.min()
 st.markdown("**Длительность периода буровых работ:** " + str(td.days) + " дней")
 
-ds_period = st.sidebar.slider("Показать скважины за период (в днях от сегодняшней даты)", 1, td.days, step=1)
-
+st.sidebar.markdown("**Сведения отображаемые на карте**")
 bhf = st.sidebar.checkbox("Пробуренные скважины", True)
 
-start_date = st.sidebar.date_input('Начало интервала', pd.to_datetime(data['date_finish'].dt.date.min()))
+ds_period = st.sidebar.slider("Показать скважины за период (в днях от сегодняшней даты)", 1, td.days, step=1)
+start_date = st.sidebar.date_input('Начало интервала', today-pd.to_timedelta(str(ds_period)+'d'))
 end_date = st.sidebar.date_input('Конец интервала', today)
+st.sidebar.markdown("Период: " + str(ds_period) + " дн.")
 
 
 df = data[(data['date_finish'].dt.date >= (end_date-pd.to_timedelta(str(ds_period)+'d'))) & (data['date_finish'].dt.date < end_date)]
 
-st.markdown("**Пробурено** всего **" + str(start_date) + "** по **" + str(end_date) +"** : **" + "{:.1f}".format(
+st.markdown("**Пробурено** всего **" + str(data['date_finish'].dt.date.min()) + "** по **" + str(end_date) +"** : **" + "{:.1f}".format(
     data['depth_f'].sum()) + " п.м.**")
-st.markdown("&emsp;&emsp;&emsp;&emsp;&emsp; за период **" + str(end_date-pd.to_timedelta(str(ds_period)+'d')) + "** по **" + str(end_date) +
+st.markdown("За период **" + str(end_date-pd.to_timedelta(str(ds_period)+'d')) + "** по **" + str(end_date) +
             "** : **" + "{:.1f}".format(df['depth_f'].sum()) + " п.м.**")
 st.markdown("**Проектный метраж**: {:.1f}".format(data_pr['depth_pr'].sum()) + " п.м.")
 
