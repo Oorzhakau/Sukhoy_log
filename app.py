@@ -5,6 +5,7 @@ import pydeck as pdk
 import plotly.graph_objs as go
 import plotly.express as px
 import re
+from datetime import datetime
 
 #DATA
 DATA_URL = (
@@ -31,7 +32,7 @@ st.markdown(
     )
 
 
-mydateparser = lambda x: pd.datetime.strptime(x, "%d.%m.%y")
+mydateparser = lambda x: datetime.strptime(x, "%d.%m.%y")
 сomma2dot = lambda x: x.replace(',', '.')
 
 def change_date_str(x):
@@ -143,18 +144,24 @@ today = pd.to_datetime('today')
 st.markdown("**Сегодня:** " + str(today.date()))
 st.markdown("**Дата начала бурения:** " + str(data['date_start'].dt.date.min()))
 
+td = today.date() - data['date_start'].dt.date.min()
+st.markdown("**Длительность периода буровых работ:** " + str(td.days) + " дней")
+
+ds_period = st.sidebar.slider("Показать скважины за период (в днях от сегодняшней даты)", 1, td.days, step=1)
+
 bhf = st.sidebar.checkbox("Пробуренные скважины", True)
 
 start_date = st.sidebar.date_input('Начало интервала', pd.to_datetime(data['date_finish'].dt.date.min()))
 end_date = st.sidebar.date_input('Конец интервала', today)
 
 
-df = data[(data['date_finish'].dt.date >= start_date) & (data['date_finish'].dt.date < end_date)]
+df = data[(data['date_finish'].dt.date >= (end_date-pd.to_timedelta(str(ds_period)+'d'))) & (data['date_finish'].dt.date < end_date)]
 
-
-st.markdown("Пробурено с **" + str(start_date) + "** по **" + str(end_date) +"** : **" + "{:.1f}".format(
-    df['depth_f'].sum()) + " п.м.**")
-st.markdown("Проектный метраж: {:.1f}".format(data_pr['depth_pr'].sum()) + " п.м.")
+st.markdown("**Пробурено** всего **" + str(start_date) + "** по **" + str(end_date) +"** : **" + "{:.1f}".format(
+    data['depth_f'].sum()) + " п.м.**")
+st.markdown("&emsp;&emsp;&emsp;&emsp;&emsp; за период **" + str(end_date-pd.to_timedelta(str(ds_period)+'d')) + "** по **" + str(end_date) +
+            "** : **" + "{:.1f}".format(df['depth_f'].sum()) + " п.м.**")
+st.markdown("**Проектный метраж**: {:.1f}".format(data_pr['depth_pr'].sum()) + " п.м.")
 
 bhp = st.sidebar.checkbox("Проектные скважины", False)
 
@@ -236,10 +243,10 @@ st.pydeck_chart(pdk.Deck(
     tooltip=tooltip,
  ))
 
-st.markdown("<p style='text-align: center;'>Список скважин пробуренных с <b>" + str(start_date) + "</b> по <b>" + str(end_date) + "</b> </p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center;'>Список скважин пробуренных с <b>" + str(end_date-pd.to_timedelta(str(ds_period)+'d')) + "</b> по <b>" + str(end_date) + "</b> </p>", unsafe_allow_html=True)
 st.dataframe(df)
 
-res = df.groupby(['date_finish']).sum()
+res = data.groupby(['date_finish']).sum()
 res.reset_index(inplace=True)
 
 #Проходка за сутки-------------------------------------------------------------------------------------------
@@ -251,7 +258,7 @@ fig = px.line(res, x='date_finish', y='depth_f')
 fig.update_layout(xaxis_title="Дата",
                   yaxis_title="Метраж, п.м.",
                   width=sl_width,
-                  height=sl_width-int(0.2*sl_width),
+                  height=sl_width-int(0.4*sl_width),
                   margin=dict(l=20, r=20, t=0, b=0))
 st.write(fig)
 
@@ -280,7 +287,7 @@ acc_date_pr = pd.DataFrame(acc_date_pr)
 acc_date_pr.reset_index(inplace=True)
 acc_date_pr.rename(columns={'index': 'date', 0: 'depth'}, inplace=True)
 
-
+#Куммулятивная кривая-------------------------------------------------------------------------------------------
 st.markdown("<br><br><p style='text-align: center;'>Куммулятивная кривая метража с <b>" + str(start_date) + "</b> по <b>" + str(end_date) + "</b> </p>", unsafe_allow_html=True)
 fig = go.Figure()
 fig.add_trace(go.Scatter(x=acc_date['date'], y=acc_date['depth'],  name='Фактический'))
@@ -295,12 +302,12 @@ fig.update_layout(legend_orientation="h",
                   yaxis_title="Метраж, п.м.",
                   margin=dict(l=20, r=20, t=0, b=0),
                   width=sl_width,
-                  height=sl_width-int(0.2*sl_width),
+                  height=sl_width-int(0.4*sl_width),
                   xaxis_range=[acc_date['date'].iloc[0], acc_date['date'].iloc[acc_date.shape[0]-1]])
 st.write(fig)
 
 
-#Количество буровой технике
+#Количество буровой технике-------------------------------------------------------------------------------------------
 data_tech = pd.read_excel('СМГ_по объектам.xls',skiprows=3, header=0)
 data_tech = data_tech.iloc[0].transpose()
 data_tech.dropna(inplace=True)
@@ -309,7 +316,7 @@ data_tech = pd.DataFrame(data_tech)
 data_tech.reset_index(inplace=True)
 data_tech.rename(columns={'index': 'date', 0: 'tech'}, inplace=True)
 
-st.markdown("<br><br><p style='text-align: center;'><b>Проектное количество буровой техники, шт.</b> </p>", unsafe_allow_html=True)
+st.markdown("<br><br><p style='text-align: center;'>Проектное количество буровой техники, шт. </p>", unsafe_allow_html=True)
 fig = go.Figure()
 fig.add_trace(go.Scatter(x=data_tech['date'], y=data_tech['tech'],  name='Количество буровой технике, шт'))
 fig.update_layout(legend_orientation="h",
@@ -321,7 +328,7 @@ fig.update_layout(legend_orientation="h",
                   xaxis_title="Дата",
                   yaxis_title="Метраж, п.м.",
                   width=sl_width,
-                  height=sl_width-int(0.2*sl_width),
+                  height=sl_width-int(0.4*sl_width),
                   margin=dict(l=20, r=20, t=0, b=0),
                   )
 st.write(fig)
