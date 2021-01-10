@@ -13,6 +13,12 @@ cffi==1.14.4
 chardet==4.0.0
 click==7.1.2
 colorama==0.4.4
+dash==1.18.1
+dash-core-components==1.14.1
+dash-html-components==1.1.1
+dash-renderer==1.8.3
+dash-table==4.11.1
+DateTime==4.3
 decorator==4.4.2
 defusedxml==0.6.0
 entrypoints==0.3
