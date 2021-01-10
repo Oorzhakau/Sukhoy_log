@@ -252,12 +252,13 @@ res.reset_index(inplace=True)
 
 #Проходка за сутки-------------------------------------------------------------------------------------------
 
-st.markdown("<br><br><p style='text-align: center;'>Проходка за сутки в период с <b>" + str(start_date) + "</b> по <b>" + str(end_date) + "</b> </p>", unsafe_allow_html=True)
-sl_width = st.slider("Ширина графиков", 220, 1000, step=20)
+st.markdown("<br><br><p style='text-align: center;'>Проходка за сутки в период с <b>" + str(data['date_finish'].dt.date.min()) + "</b> по <b>" + str(end_date) + "</b> </p>", unsafe_allow_html=True)
+sl_width = st.slider("Ширина графиков", 240, 1000, step=30)
 
 fig = px.line(res, x='date_finish', y='depth_f')
 fig.update_layout(xaxis_title="Дата",
                   yaxis_title="Метраж, п.м.",
+                  hovermode="y unified",
                   width=sl_width,
                   height=sl_width-int(0.4*sl_width),
                   margin=dict(l=20, r=20, t=0, b=0))
@@ -289,7 +290,7 @@ acc_date_pr.reset_index(inplace=True)
 acc_date_pr.rename(columns={'index': 'date', 0: 'depth'}, inplace=True)
 
 #Куммулятивная кривая-------------------------------------------------------------------------------------------
-st.markdown("<br><br><p style='text-align: center;'>Куммулятивная кривая метража с <b>" + str(start_date) + "</b> по <b>" + str(end_date) + "</b> </p>", unsafe_allow_html=True)
+st.markdown("<br><br><p style='text-align: center;'>Куммулятивная кривая метража с <b>" + str(data['date_finish'].dt.date.min()) + "</b> по <b>" + str(end_date) + "</b> </p>", unsafe_allow_html=True)
 fig = go.Figure()
 fig.add_trace(go.Scatter(x=acc_date['date'], y=acc_date['depth'],  name='Фактический'))
 fig.add_trace(go.Scatter(x=acc_date_pr['date'], y=acc_date_pr['depth'],  name='Проектный'))
