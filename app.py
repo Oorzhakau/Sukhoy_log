@@ -14,6 +14,9 @@ DATA_URL = (
 DATA_URL_PROJECT = (
 "Приложение 3 Каталог горных выработок.xls"
 )
+DATA_URL_ARH = (
+"Skv_arh_пересчет.xls"
+)
 
 st.markdown(
         f"""
@@ -37,7 +40,7 @@ mydateparser = lambda x: datetime.strptime(x, "%d.%m.%y")
 
 def change_date_str(x):
     if isinstance(x, str):
-        if (x.replace(' ', '') == 'невскрыты') or (x == '-'):
+        if (x.replace(' ', '') == 'невскрыты') or (x == '-') or (x.replace(' ', '') == ''):
             d = np.NAN
         else:
             d = float(x.replace(',', '.'))
@@ -126,7 +129,11 @@ def load_data_project(nrows):
     data.dropna(subset=['latitude','longitude'], inplace=True)
     return data
 
-
+@st.cache(persist=True)
+def load_data_arh(nrows):
+    data = pd.read_excel(DATA_URL_ARH, skiprows=0, header=0)
+    data['depth_rock'] = data['depth_rock'].apply(change_date_str)
+    return data
 
 st.markdown("<h1 style='text-align: center;'>Интерактивная сводка</h1>", unsafe_allow_html=True)
 st.markdown("<h2 style='text-align: center;'>Сухой Лог</h2>", unsafe_allow_html=True)
@@ -135,6 +142,7 @@ data = load_data(100000)
 original_data = data
 data_pr = load_data_project(100000)
 original_data_pr = data_pr
+data_skv_arh = load_data_arh(100000)
 
 st.markdown("**Объект:**\n Золотодобывающее предприятие на месторождении «Сухой Лог»")
 st.markdown("**Заказчик:** ООО \"CЛ Золото\"")
@@ -165,13 +173,18 @@ st.markdown("За период **" + str(end_date-pd.to_timedelta(str(ds_period)
 st.markdown("**Проектный метраж**: {:.1f}".format(data_pr['depth_pr'].sum()) + " п.м.")
 
 bhp = st.sidebar.checkbox("Проектные скважины", False)
+bhp_arh = st.sidebar.checkbox("Архивные скважины", True)
+
 
 st.sidebar.markdown("**Сведения о вскрытии скальных грунтов**")
 bh_rock = st.sidebar.checkbox("Отобразить информацию о вскрытии скальных грунтов ", True)
 
 df_f = df[['name', 'latitude', 'longitude']]
 df_pr = data_pr[['name', 'latitude', 'longitude']]
+df_arh = data_skv_arh[['name', 'latitude', 'longitude']]
+
 df_rock = df[['depth_rock', 'latitude', 'longitude']].dropna(how='any')
+df_rock_arh = data_skv_arh[['depth_rock', 'latitude', 'longitude']].dropna(how='any')
 
 st.markdown("<h2 style='text-align: center;'>Карта фактического материала</h1>", unsafe_allow_html=True)
 
@@ -188,10 +201,26 @@ if bhp:
     map_layers.append(pdk.Layer(
         'TextLayer',
         data=df_pr,
-        get_position='[longitude, latitude]',
+        get_position='[longitude+0.0002, latitude+0.0002]',
         get_text='name',
-        get_size=23,
+        get_size=28,
         get_color=[200, 50, 0],
+        get_angle=0,
+    ))
+if bhp_arh:
+    map_layers.append(pdk.Layer(
+        'ScatterplotLayer',
+        data=df_arh,
+        get_position='[longitude, latitude]',
+        get_color='[0, 40, 255, 100]',
+        get_radius=10))
+    map_layers.append(pdk.Layer(
+        'TextLayer',
+        data=df_arh,
+        get_position='[longitude+0.0002, latitude+0.0002]',
+        get_text='name',
+        get_size=30,
+        get_color=[0, 50, 255],
         get_angle=0,
     ))
 #Добавление пробуренных скважин
@@ -205,9 +234,9 @@ if bhf:
     map_layers.append(pdk.Layer(
         'TextLayer',
         data=df_f,
-        get_position='[longitude, latitude]',
+        get_position='[longitude+0.0002, latitude+0.0002]',
         get_text='name',
-        get_size=23,
+        get_size=28,
         get_color=[0, 200, 100],
         get_angle=0,
     ))
@@ -227,8 +256,23 @@ if bh_rock:
     get_fill_color=["depth_rock * 50", "250 - depth_rock * 25", "depth_rock * 0", "depth_rock * 25"]
     ))
 
+if bhp_arh and bh_rock:
+    map_layers.append(pdk.Layer(
+        "ColumnLayer",
+        data=df_rock_arh,
+        opacity=0.2,
+        get_position='[longitude, latitude]',
+        threshold=0.75,
+        get_elevation="depth_rock",
+        elevation_scale=30,
+        radius=25,
+        pickable=True,
+        auto_highlight=True,
+        get_fill_color=["0", "depth_rock * 50", "255 - depth_rock * 0", "depth_rock * 25"]
+    ))
+
 tooltip = {
-    "html": "<b>{depth_rock}</b> метров до скальных грунтов",
+    "html": "<b>{depth_rock}</b> м до скальных грунтов",
     "style": {"background": "grey", "color": "white", "font-family": '"Helvetica Neue", Arial', "z-index": "10000"},
 }
 
