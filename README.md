@@ -1,5 +1,5 @@
 # Sukhoy_log
-link - http://sl.oorzhakco.ru/
+link - https://sukhoi-log-app.herokuapp.com/
 
 Interactive map-site. Object: Sukhoy Log
 
